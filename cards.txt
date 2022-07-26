@@ -1,0 +1,33 @@
+Patience
+spell
+10
+0
+when this resolves, you win the game.
+end card
+Card eater
+spell
+4
+4
+"He's a tough one, two more hits and he's gone" -- Luka, the warrior
+end card
+Thief
+spell
+2
+2
+"Ooh, shiny! i'm taking it from you."
+end card
+Not so fast!
+spell
+2
+0
+increase the cost of all
+the spells on the stack by 4
+"And there was this guy who ruined the fun for everyone..."
+end card
+Pocket void
+spell
+5
+0
+destroy all spells on the stack
+"I heard there's something stronger than magic"
+end card
