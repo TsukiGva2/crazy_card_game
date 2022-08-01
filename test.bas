@@ -63,6 +63,7 @@ dim shared midcard as card
 dim shared stack(STACK_SZ) as spell
 dim shared player as playertype
 dim shared enemy as playertype
+dim shared pics(CARD_NUM) as long
 
 dim shared has_drawn as integer
 
@@ -106,33 +107,47 @@ sub gameloop
 
 		_Display
 		Pcopy 1, _Display
-	loop until checkwin = 1
+	loop until checkwin(0) = 1
 end sub
 
 sub explain_stack
 	cls
+	dim pressed as string
 	do
 		_Limit 60
 		Pcopy _Display, 1
+
+		if pressed = "left" and not _KEYDOWN(CVI(CHR$(0) + "K")) then pressed = ""
+		if pressed = "right" and not _KEYDOWN(CVI(CHR$(0) + "M")) then pressed = ""
 		
-		locate 1,15
-		print "Cards in stack: "; stack_index
+		locate 15, 15
+		print "Cards in stack: "; stack_index - 1
 		
 		color _rgb(0,255,255)
 		dim i as integer
 		locate 1,1
-		if stack(i).owner = enemy.name then
-			print "???"
+		if stack(i).owner <> player.name then
+			print "<<???>>"; " owner: " + stack(i).owner
 		else
-			describe stack(i).name, stack(i).text, 0, stack(i).cost, "spell"
+			describe stack(i).name, stack(i).text, 0, stack(i).cost, "spell", stack(i).owner
+
+			dim p as long
+			p = -1
+			if stack(i).id <> 0 then p = pics(stack(i).id)
+			paint_card win.r.w / 2, win.r.h / 2, CARD_W, CARD_H, p
 		end if
 		color _rgb(255,255,255)
 
-		IF _KEYDOWN(CVI(CHR$(0) + "K")) THEN i = i - 1   ' left
-		IF _KEYDOWN(CVI(CHR$(0) + "M")) THEN i = i + 1   ' right
-		if i > stack_index then i = i - 1
+		IF _KEYDOWN(CVI(CHR$(0) + "K")) and pressed <> "left" then
+			i = i - 1   ' left
+			pressed = "left"
+		end if
+		IF _KEYDOWN(CVI(CHR$(0) + "M")) and pressed <> "right" then
+			i = i + 1   ' right
+			pressed = "right"
+		end if
+		if i >= stack_index then i = i - 1
 		if i < 1 then i = 1
-		_delay 0.05
 
 		_Display
 		pcopy 1, _display
@@ -146,10 +161,10 @@ sub endturn
 	tmp = turn + "|"
 	tmp = tmp + midcard.owner + "|"
 	tmp = tmp + STR$(midcard.id) + "|" + STR$(stack_index) + "|"
-	tmp = tmp + STR$(player.cards)
-	tmp = tmp + "|" + STR$(enemy.cards) + "|"
+	tmp = tmp + STR$(enemy.cards)
+	tmp = tmp + "|" + STR$(player.cards) + "|"
 	dim i as integer
-	for i = 1 to stack_index
+	for i = 1 to stack_index - 1
 		if stack(i).owner = "" then stack(i).owner = "none"
 		tmp = tmp + stack(i).owner + "|"
 		tmp = tmp + STR$(stack(i).id) + "|"
@@ -214,19 +229,22 @@ sub enemy_turn
 		fst = instr(fst + 1, tmp, "|")
 		snd = instr(fst + 1, tmp, "|") - fst
 
-		if id <> 0 then
+		if stack(i).id <> 0 then
 			stack(i).name = cards(stack(i).id).name
 			stack(i).text = cards(stack(i).id).text
 		end if
 
+		if stack(i).owner = "none" then
+			stack(i).name = ""
+			stack(i).text = ""
+			stack(i).owner = ""
+			stack(i).cost = 0
+			stack(i).id = 0
+		end if
 	next i
 end sub
 
-sub player_turn
-	if turn <> player.name then
-		exit sub
-	end if
-
+sub draw_one
 	dim i as integer
 	if has_drawn <> 1 then
 		has_drawn = 1
@@ -238,7 +256,15 @@ sub player_turn
 			end if
 		next i
 	end if
+end sub
 
+sub player_turn
+	if turn <> player.name then
+		exit sub
+	end if
+
+	draw_one
+	
 	do
 		if _MouseButton(2) then
 			for i = 1 to HAND_SZ
@@ -299,6 +325,7 @@ sub player_turn
 							stack(stack_index).cost = player_hand(i).pow
 							stack(stack_index).text = player_hand(i).text
 							stack(stack_index).id = player_hand(i).id
+							stack(stack_index).owner = player_hand(i).owner
 							stack_index = stack_index + 1
 								
 							player_hand(i).name = ""
@@ -325,16 +352,10 @@ sub spell_stuff
 	dim i as integer
 	dim tmp(STACK_SZ) as spell
 	dim alldone as integer
-
-	for i = stack_index to 1 step -1
-		if stack(i).name <> "" then
-			stack(i).cost = stack(i).cost - 1
-		end if
-	next i
-
+	
 	do
 		alldone = 1
-		for i = stack_index to 1 step -1
+		for i = stack_index - 1 to 1 step -1
 			if stack(i).name <> "" then
 				if stack(i).cost <= 0 then
 					resolve stack(i).text, stack(i).owner ' here we go :)
@@ -348,12 +369,13 @@ sub spell_stuff
 	
 	dim j as integer
 	j = 1
-	for i = 1 to stack_index
+	for i = 1 to stack_index - 1
 		if stack(i).name <> "" then
 			tmp(j).cost = stack(i).cost
 			tmp(j).text = stack(i).text
 			tmp(j).name = stack(i).name
 			tmp(j).id = stack(i).id
+			tmp(j).owner = stack(i).owner
 			j = j + 1
 		end if
 	next i
@@ -369,6 +391,12 @@ sub spell_stuff
 		stack(i).text = tmp(i).text
 		stack(i).name = tmp(i).name
 		stack(i).id = tmp(i).id
+	next i
+
+	for i = stack_index to 1 step -1
+		if stack(i).name <> "" then
+			stack(i).cost = stack(i).cost - 1
+		end if
 	next i
 end sub
 
@@ -451,10 +479,21 @@ Function cardhovered (x, y)
     End If
 End Function
 
+sub paint_card (x, y, w, h, pic)
+	if pic = -1 then
+		card_frame x, y, w, h
+	else
+		_putimage (x, y)-(x + w, y + h), pic
+	end if
+end sub
+
 sub paint_cards
 	paint_hand
 
-	card_frame midcard.r.x, midcard.r.y, CARD_W, CARD_H
+	dim p as long
+	p = -1
+	if midcard.id <> 0 then p = pics(midcard.id)
+	paint_card midcard.r.x, midcard.r.y, CARD_W, CARD_H, p
 end sub
 
 sub paint_hand
@@ -462,29 +501,32 @@ sub paint_hand
 	dim t as rect
 	for i = 1 to HAND_SZ
 		t = player_hand(i).r
-		card_frame t.x, t.y, CARD_W, CARD_H
+		dim p as long
+		p = -1
+		if player_hand(i).id <> 0 then p = pics(player_hand(i).id)
+		paint_card t.x, t.y, CARD_W, CARD_H, p
 	next i
 end sub
 
 sub explain_card
 	dim i as integer
 	if cardhovered(midcard.r.x, midcard.r.y) then
-		describe midcard.name, midcard.text, midcard.tou, midcard.pow, midcard.kind
+		describe midcard.name, midcard.text, midcard.tou, midcard.pow, midcard.kind, midcard.owner
 	end if
 	for i = 1 to HAND_SZ
 		if cardhovered(player_hand(i).r.x, player_hand(i).r.y) then
-			describe player_hand(i).name, player_hand(i).text, player_hand(i).tou, player_hand(i).pow, player_hand(i).kind
+			describe player_hand(i).name, player_hand(i).text, player_hand(i).tou, player_hand(i).pow, player_hand(i).kind, player_hand(i).owner
 		end if
 	next i
 end sub
 
-sub describe (cname as string, text as string, tou as integer, pow as integer, kind as string)
+sub describe (cname as string, text as string, tou as integer, pow as integer, kind as string, owner as string)
 	locate 1,1
 	if cname = "" then
 		print "no card"
 		exit sub
 	end if
-	print cname
+	print "<<"; cname; ">> owner: " + owner
 	if kind <> "spell" then
 		print "| " + kind + " card, " + _TRIM$(STR$(pow)) + "/" + _TRIM$(STR$(tou)) + " |"
 	else
@@ -514,6 +556,8 @@ sub setup
 
 	dim answ as string
 	LINE INPUT "Enter ip (or leave blank to host game): " ; answ
+
+	if answ = "l" then answ = "localhost"
 	if answ = "" then
 		conn.port = ":7777"
 		conn.handle = _openhost("TCP/IP" + conn.port)
@@ -599,7 +643,6 @@ sub makehand
 
 		player_hand(i).r.x = i * padding * CARD_W + offset
 		player_hand(i).r.y = win.r.h - CARD_H - 1
-		player_hand(i).owner = player.name
 	next i
 end sub
 
@@ -614,6 +657,7 @@ sub draw_card (slot as integer)
 		player_hand(slot).text = cards(c).text
 		player_hand(slot).kind = cards(c).kind
 		player_hand(slot).id = cards(c).id
+		player_hand(slot).owner = player.name
 	end if
 end sub
 
@@ -640,6 +684,12 @@ sub getcards
 					cards(i).pow = val(temp)
 				case 4
 					cards(i).tou = val(temp)
+				case 5
+					pics(i) = _loadimage(temp)
+					if pics(i) = -1 and temp <> "no image" then
+						print "failed to load image: '" + temp + "'"
+						end
+					end if
 				case else
 					cards(i).text = cards(i).text + CHR$(10) + temp
 			end select
@@ -649,9 +699,9 @@ sub getcards
 	close #1
 end sub
 
-function checkwin
+function checkwin (dummy as integer)
 	checkwin = 0
-	if enemy.cards = 0 and stack_index = 1 then
+	if enemy.cards = 0 and stack_index <= 1 then
 		checkwin = 1
 	end if
 end function

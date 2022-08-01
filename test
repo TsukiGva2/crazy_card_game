@@ -1,0 +1,5 @@
+#/usr/bin/sh
+
+make
+./game &
+./game &

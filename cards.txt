@@ -1,25 +1,29 @@
-Patience
+Time Bomb
 spell
 10
 0
+timebomb.png
 when this resolves, you win the game.
 end card
 Card eater
-spell
+monster
 4
 4
+no image
 "He's a tough one, two more hits and he's gone" -- Luka, the warrior
 end card
 Thief
-spell
+monster
 2
 2
+no image
 "Ooh, shiny! i'm taking it from you."
 end card
 Not so fast!
 spell
 2
 0
+notsofast.png
 increase the cost of all
 the spells on the stack by 4
 "And there was this guy who ruined the fun for everyone..."
@@ -28,6 +32,7 @@ Pocket void
 spell
 5
 0
+no image
 destroy all spells on the stack
 "I heard there's something stronger than magic"
 end card
