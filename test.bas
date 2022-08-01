@@ -55,6 +55,8 @@ const HAND_SZ = 2
 const STACK_SZ = 10
 const TIMELIMIT = 1
 
+dim shared endmsg as string
+endmsg = CHR$(5)
 dim shared conn as conntype
 dim shared padding as double
 dim shared offset as integer
@@ -309,6 +311,7 @@ sub player_turn
 									midcard.id = player_hand(i).id
 								end if
 								player_hand(i).name = ""
+								player_hand(i).id = 0
 							end if
 						else
 							midcard.name = player_hand(i).name
@@ -318,6 +321,7 @@ sub player_turn
 							midcard.owner = player_hand(i).owner
 							midcard.id = player_hand(i).id
 							player_hand(i).name = ""
+							player_hand(i).id = 0
 						end if
 					else
 						if stack_index < STACK_SZ then
@@ -596,10 +600,10 @@ sub setup
 	' enemy
 	cls
 	if conn.ishost then
+		print "waiting for players"
 		do
-			print "waiting for players"
 			conn.connection = _openconnection(conn.handle)
-			_delay 1
+			_delay 0.05
 		loop until conn.connection
 		cls
 	end if

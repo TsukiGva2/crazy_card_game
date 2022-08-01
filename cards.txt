@@ -9,15 +9,15 @@ Card eater
 monster
 4
 4
-no image
+cardeater.png
 "He's a tough one, two more hits and he's gone" -- Luka, the warrior
 end card
-Thief
+Cultist
 monster
 2
 2
-no image
-"Ooh, shiny! i'm taking it from you."
+cultist.png
+"The timesword's seal has been broken, it's finally time..."
 end card
 Not so fast!
 spell
@@ -32,7 +32,7 @@ Pocket void
 spell
 5
 0
-no image
+pocketvoid.png
 destroy all spells on the stack
 "I heard there's something stronger than magic"
 end card
